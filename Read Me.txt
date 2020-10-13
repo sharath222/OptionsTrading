@@ -1,0 +1,2 @@
+Version1: added sheet and segregated vertical data.
+Version1.1: Iron Condor segregation done and naming of columns is pending
