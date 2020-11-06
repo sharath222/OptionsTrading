@@ -23,7 +23,7 @@ try:
 except ValueError:
     data[["BOT/SOLD","Quantity","Strategy","Strategy1","Ticker","Total Stocks","Weekly/Monthly","Expiry Date","Month","Year","Strike Price","Call/Put","Premium","Trade"]] = data["DESCRIPTION"].str.split(" ", expand = True)
     data = data.drop("DESCRIPTION", axis=1)
-    data["AM/PM"] = np.nan
+    data["AM/PM"] = None
     data.columns = ["DATE","TIME","BOT/SOLD","Quantity","Strategy","Strategy1","Ticker","Total Stocks","Weekly/Monthly","Expiry Date","Month","Year","AM/PM","Strike Price","Call/Put","Premium","Trade"]
      
 #remove unncessary values
@@ -46,7 +46,7 @@ data["Strategy1"] = data["Strategy1"].replace('ROLL', np.nan)
 mask = data["Strategy1"].isna()
 data.loc[mask, "Strategy1":] = data.loc[mask, "Strategy1":].shift(-1, axis=1)
 
-data["Strategy1"] = data["Strategy1"].replace("100",np.nan)
+data["Strategy1"] = data["Strategy1"].replace("100", np.nan)
 
 mask = data["Strategy1"].isna()
 data.loc[mask, "Strategy":] = data.loc[mask, "Strategy":].shift(1, axis=1)
@@ -63,11 +63,19 @@ data["Call/Put"] = data["Call/Put"].fillna("-")
 truthTable = data["Call/Put"].str.contains('@')
 for i in range(len(truthTable)):
     if (truthTable.iloc[i] == True):
-        if (data.iloc[i,15] == None):
+        if (data.iloc[i,15] == np.nan):
             data.iloc[i,15] = "-"
 
 mask = data["Premium"].isna()
 data.loc[mask, "Weekly/Monthly":] = data.loc[mask, "Weekly/Monthly":].shift(1, axis=1)
+
+for i in range(len(data)):
+    if (data.iloc[i,9] == "(Weeklys)"):
+        data.iloc[i,8] = data.iloc[i,9]
+        data.iloc[i,9] = np.nan
+        
+mask = data["Expiry Date"].isna()
+data.loc[mask, "Expiry Date":] = data.loc[mask, "Expiry Date":].shift(-1, axis=1)        
 
 truthTable = data["Premium"].str.contains('@')
 for i in range(len(data)):
@@ -90,6 +98,8 @@ data.loc[mask, "Weekly/Monthly":"Year"] = data.loc[mask, "Weekly/Monthly":"Year"
 
 data["Weekly/Monthly"] = data["Weekly/Monthly"].fillna("Monthly")
 
+data["Trade"] = data["Trade"].fillna("-")
+
 for i in range(len(data)):
     data.iloc[i,9] = data.iloc[i,9] + '-' + data.iloc[i,10] + '-' + data.iloc[i,11]
         
@@ -98,10 +108,10 @@ data = data.drop(columns = ["Strategy1", "Total Stocks", "Month", "Year"])
 data[["Junk","Premium"]] = data["Premium"].str.split("@", expand = True)
 data = data.drop(columns = ["Junk"])
 
-data["Call Buy"] = np.nan
-data["Call Sell"] = np.nan
-data["Put Sell"] = np.nan
-data["Put Buy"] = np.nan
+data["Call Buy"] = None
+data["Call Sell"] = None
+data["Put Sell"] = None
+data["Put Buy"] = None
 
 data["Temp"] = data["Strike Price"].str.contains("/", na = False)
 
@@ -110,25 +120,25 @@ for i in range(len(data)):
         if (data.iloc[i,10] == 'CALL'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,13] = data.iloc[i,9]
-                data.iloc[i,9] = np.nan
+                data.iloc[i,9] = None
         elif (data.iloc[i,10] == 'PUT'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,16] = data.iloc[i,9]
-                data.iloc[i,9] = np.nan
+                data.iloc[i,9] = None
     elif (data.iloc[i,2] == 'SOLD'):
         if (data.iloc[i,10] == 'CALL'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,14] = data.iloc[i,9]
-                data.iloc[i,9] = np.nan
+                data.iloc[i,9] = None
         elif (data.iloc[i,10] == 'PUT'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,15] = data.iloc[i,9]
-                data.iloc[i,9] = np.nan
+                data.iloc[i,9] = None
 
-data["Temp1"] = np.nan
-data["Temp2"] = np.nan
-data["Temp3"] = np.nan
-data["Temp4"] = np.nan
+data["Temp1"] = None
+data["Temp2"] = None
+data["Temp3"] = None
+data["Temp4"] = None
 
 data[["Temp1","Temp2","Temp3","Temp4"]] = data["Strike Price"].str.split("/", expand = True)
 
@@ -138,9 +148,9 @@ for i in range(len(data)):
             if (data.iloc[i,10] == 'CALL'):
                 data.iloc[i,13] = data.iloc[i,18]
                 data.iloc[i,14] = data.iloc[i,19]
-                data.iloc[i,18] = np.nan
-                data.iloc[i,19] = np.nan
-                data.iloc[i,9] = np.nan
+                data.iloc[i,18] = None
+                data.iloc[i,19] = None
+                data.iloc[i,9] = None
 
 for i in range(len(data)):
     if (data.iloc[i,19] != None):
@@ -148,31 +158,50 @@ for i in range(len(data)):
             if (data.iloc[i,10] == 'PUT'):
                 data.iloc[i,16] = data.iloc[i,18]
                 data.iloc[i,15] = data.iloc[i,19]
-                data.iloc[i,18] = np.nan
-                data.iloc[i,19] = np.nan
-                data.iloc[i,9] = np.nan
+                data.iloc[i,18] = None
+                data.iloc[i,19] = None
+                data.iloc[i,9] = None
 
-# for i in range(len(data)):
-#     if (data.iloc[i,19] != None):
-#         if ((data.iloc[i,20] != None and data.iloc[i,21] != None)):
-#                 data.iloc[i,13] = data.iloc[i,18]
-#                 data.iloc[i,14] = data.iloc[i,19]
-#                 data.iloc[i,16] = data.iloc[i,20]
-#                 data.iloc[i,15] = data.iloc[i,21]
-#                 data.iloc[i,18] = np.nan
-#                 data.iloc[i,19] = np.nan
-#                 data.iloc[i,20] = np.nan
-#                 data.iloc[i,21] = np.nan
-#                 data.iloc[i,9] = np.nan
+for i in range(len(data)):
+    if (data.iloc[i,18] != None and data.iloc[i,19] != None and data.iloc[i,20] != None and data.iloc[i,21] != None):
+        if (data.iloc[i,2] == 'BOT'):  
+                data.iloc[i,13] = data.iloc[i,18]
+                data.iloc[i,14] = data.iloc[i,19]
+                data.iloc[i,16] = data.iloc[i,20]
+                data.iloc[i,15] = data.iloc[i,21]
+                data.iloc[i,18] = None
+                data.iloc[i,19] = None
+                data.iloc[i,20] = None
+                data.iloc[i,21] = None
+                data.iloc[i,9] = None
+        if (data.iloc[i,2] == 'SOLD'):  
+                data.iloc[i,13] = data.iloc[i,19]
+                data.iloc[i,14] = data.iloc[i,18]
+                data.iloc[i,16] = data.iloc[i,21]
+                data.iloc[i,15] = data.iloc[i,20]
+                data.iloc[i,18] = None
+                data.iloc[i,19] = None
+                data.iloc[i,20] = None
+                data.iloc[i,21] = None
+                data.iloc[i,9] = None
 
-# data = data.drop(columns = ["Temp","Temp1","Temp2","Temp3","Temp4"])
+data = data.drop(columns = ["Temp","Temp1","Temp2","Temp3","Temp4"])
 
-# data["Call + Premium"] = np.nan
-# data["Put - Premium"] = np.nan
+data = data.sort_values(by=['Strategy'])
+
+vertical = data["Ticker"]
+
+data.to_csv("options.csv")
+
+data["Call + Premium"] = None
+data["Put - Premium"] = None
+
 
 # for i in range(len(data)):
 #     data.iloc[i,17] = float(data.iloc[i,13]) + float(data.iloc[i,11])
 #     data.iloc[i,18] = float(data.iloc[i,16]) - float(data.iloc[i,11])
+
+
 
 
 
