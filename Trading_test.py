@@ -282,9 +282,9 @@ vertical["PL_Amount"] = None
         
 for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "CALL"):
-        vertical.iloc[i,25] = float(vertical.iloc[i,13])*vertical.iloc[i,24]*100
+        vertical.iloc[i,25] = vertical.iloc[i,24]*100
     if(vertical.iloc[i,10] == "PUT"):
-        vertical.iloc[i,25] = float(vertical.iloc[i,15])*vertical.iloc[i,24]*100
+        vertical.iloc[i,25] = vertical.iloc[i,24]*100
                 
 # vertical.to_csv("options.csv")
 
