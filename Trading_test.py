@@ -286,30 +286,15 @@ for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "PUT"):
         vertical.iloc[i,24] = vertical.iloc[i,23]*100
         
-vertical = vertical.drop(columns = ["Temp1","Temp2","Temp3"])
+vertical = vertical.drop(columns = ["Temp1","Temp2","Temp3","Strike Price"])
 
 vertical["Profit/Loss"] = np.nan 
 
 for i in range(len(vertical)):
-    # vertical.iloc[i,21] = str(vertical.iloc[i,21])
-    if(vertical[vertical.iloc[i,21].astype(str).str.contains('-')]):
-        vertical.iloc[i,22] = "Loss"
+    if(vertical.iloc[i,20] < -1):
+        vertical.iloc[i,21] = "Loss"
     else:
-        vertical.iloc[i,22] = "Profit"
-# vertical.to_csv("options.csv")
-
-    
-            
-            
+        vertical.iloc[i,21] = "Profit"
 
 
-
-
-        
-        
-
-
-                
-
-
-                
+vertical.to_csv("options.csv")

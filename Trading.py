@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import pandas as pd
+from datetime import timezone
+from datetime import datetime
 
 #load data and remove un-neccesary fields and make data column string due to date format incosistency in csv file
 # data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
@@ -187,26 +190,111 @@ for i in range(len(data)):
 
 data = data.drop(columns = ["Temp","Temp1","Temp2","Temp3","Temp4"])
 
-data = data.sort_values(by=['Strategy'])
-
-vertical = data["Ticker"]
-
-data.to_csv("options.csv")
-
 data["Call + Premium"] = None
 data["Put - Premium"] = None
 
+data = data.sort_values(by=['Strategy'])
 
-# for i in range(len(data)):
-#     data.iloc[i,17] = float(data.iloc[i,13]) + float(data.iloc[i,11])
-#     data.iloc[i,18] = float(data.iloc[i,16]) - float(data.iloc[i,11])
+vertical = data[data["Strategy"].str.contains("VERTICAL", na = False)]
 
-
-
-
-
+for i in range(len(vertical)):
+    if(vertical.iloc[i,10] == "CALL"):
+        vertical.iloc[i,17] = float(vertical.iloc[i,13]) + float(vertical.iloc[i,11])
+    elif(vertical.iloc[i,10] == "PUT"):
+        vertical.iloc[i,18] = float(vertical.iloc[i,16]) - float(vertical.iloc[i,11])
         
+vertical["actual premium"] = None
+
+# vertical["Profit/Loss"] = None
+
+# vertical["actual Call + Premium"] = None
+# vertical["actual Put - Premium"] = None
+    
+for i in range(len(vertical)):
+    if(vertical.iloc[i,10] == "CALL"):
+        ticker = vertical.iloc[i,5]
+        expiry = datetime(2020,11,20)
         
+        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
 
+        timestamp = str(timestamp)
 
+        temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true") 
+        
+        temp = temp[0]
+        
+        temp.head
+       
+        call = vertical.iloc[i,13]
+        
+        for x in range(len(temp)):
+            if (float(temp.iloc[x,5]) == float(call)):
+                vertical.iloc[i,19] = temp.iloc[x,0]
+    
+    elif(vertical.iloc[i,10] == "PUT"):
+        
+        put = vertical.iloc[i,16]
+        
+        for x in range(len(temp)):
+            if (float(temp.iloc[x,5]) == float(put)):
+                vertical.iloc[i,19] = temp.iloc[x,0]
+
+vertical["Present Premium"] = vertical["Pctual Premium"].fillna(0)
                 
+# for i in range(len(vertical)):
+#     if(vertical.iloc[i,2] == "BOT"):
+#         if(vertical.iloc[i,10] == "CALL"):
+#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Loss"
+#             else:
+#                 vertical.iloc[i,20] = "Profit"
+#         else:
+#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Profit"
+#             else:
+#                 vertical.iloc[i,20] = "Loss"
+    
+#     if(vertical.iloc[i,2] == "SOLD"):
+#         if(vertical.iloc[i,10] == "CALL"):
+#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Loss"
+#             else:
+#                 vertical.iloc[i,20] = "Profit"
+#         else:
+#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Profit"
+#             else:
+#                 vertical.iloc[i,20] = "Loss"
+                
+vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
+vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
+
+vertical["PnL"] = None
+
+for i in range(len(vertical)):
+    if(vertical.iloc[i,21] == None):
+        vertical.iloc[i,21] = vertical.iloc[i,22]
+        
+for i in range(len(vertical)):
+    vertical.iloc[i,23] = float(vertical.iloc[i,11]) - float(vertical.iloc[i,19])
+        
+vertical["PL_Amount"] = None
+        
+for i in range(len(vertical)):
+    if(vertical.iloc[i,10] == "CALL"):
+        vertical.iloc[i,24] = vertical.iloc[i,23]*100
+    if(vertical.iloc[i,10] == "PUT"):
+        vertical.iloc[i,24] = vertical.iloc[i,23]*100
+        
+vertical = vertical.drop(columns = ["Temp1","Temp2","Temp3","Strike Price"])
+
+vertical["Profit/Loss"] = np.nan 
+
+for i in range(len(vertical)):
+    if(vertical.iloc[i,20] < -1):
+        vertical.iloc[i,21] = "Loss"
+    else:
+        vertical.iloc[i,21] = "Profit"
+
+
+vertical.to_csv("options.csv")
