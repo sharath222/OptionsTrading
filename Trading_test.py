@@ -205,7 +205,7 @@ for i in range(len(vertical)):
         
 vertical["actual premium"] = None
 
-vertical["Profit/Loss"] = None
+# vertical["Profit/Loss"] = None
 
 # vertical["actual Call + Premium"] = None
 # vertical["actual Put - Premium"] = None
@@ -241,30 +241,30 @@ for i in range(len(vertical)):
 
 vertical["actual premium"] = vertical["actual premium"].fillna(0)
                 
-for i in range(len(vertical)):
-    if(vertical.iloc[i,2] == "BOT"):
-        if(vertical.iloc[i,10] == "CALL"):
-            if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-                vertical.iloc[i,20] = "Loss"
-            else:
-                vertical.iloc[i,20] = "Profit"
-        else:
-            if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-                vertical.iloc[i,20] = "Profit"
-            else:
-                vertical.iloc[i,20] = "Loss"
+# for i in range(len(vertical)):
+#     if(vertical.iloc[i,2] == "BOT"):
+#         if(vertical.iloc[i,10] == "CALL"):
+#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Loss"
+#             else:
+#                 vertical.iloc[i,20] = "Profit"
+#         else:
+#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Profit"
+#             else:
+#                 vertical.iloc[i,20] = "Loss"
     
-    if(vertical.iloc[i,2] == "SOLD"):
-        if(vertical.iloc[i,10] == "CALL"):
-            if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-                vertical.iloc[i,20] = "Loss"
-            else:
-                vertical.iloc[i,20] = "Profit"
-        else:
-            if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-                vertical.iloc[i,20] = "Profit"
-            else:
-                vertical.iloc[i,20] = "Loss"
+#     if(vertical.iloc[i,2] == "SOLD"):
+#         if(vertical.iloc[i,10] == "CALL"):
+#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Loss"
+#             else:
+#                 vertical.iloc[i,20] = "Profit"
+#         else:
+#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
+#                 vertical.iloc[i,20] = "Profit"
+#             else:
+#                 vertical.iloc[i,20] = "Loss"
                 
 vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
 vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
