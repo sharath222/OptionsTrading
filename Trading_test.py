@@ -272,19 +272,19 @@ vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
 vertical["PnL"] = None
 
 for i in range(len(vertical)):
-    if(vertical.iloc[i,22] == None):
-        vertical.iloc[i,22] = vertical.iloc[i,23]
+    if(vertical.iloc[i,21] == None):
+        vertical.iloc[i,21] = vertical.iloc[i,22]
         
 for i in range(len(vertical)):
-    vertical.iloc[i,24] = float(vertical.iloc[i,11]) - float(vertical.iloc[i,19])
+    vertical.iloc[i,23] = float(vertical.iloc[i,11]) - float(vertical.iloc[i,19])
         
 vertical["PL_Amount"] = None
         
 for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "CALL"):
-        vertical.iloc[i,25] = vertical.iloc[i,24]*100
+        vertical.iloc[i,24] = vertical.iloc[i,23]*100
     if(vertical.iloc[i,10] == "PUT"):
-        vertical.iloc[i,25] = vertical.iloc[i,24]*100
+        vertical.iloc[i,24] = vertical.iloc[i,23]*100
                 
 # vertical.to_csv("options.csv")
 
