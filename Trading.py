@@ -5,8 +5,8 @@ from datetime import timezone
 from datetime import datetime
 
 #load data and remove un-neccesary fields and make data column string due to date format incosistency in csv file
-data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
-# data = pd.read_csv("2020-09-27-AccountStatement.csv",dtype={'DATE': str})
+# data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
+data = pd.read_csv("2020-09-27-AccountStatement.csv",dtype={'DATE': str})
 
 # rename columns
 data = data.rename(columns=data.iloc[2])
@@ -142,7 +142,6 @@ for i in range(len(data)):
     data.iloc[i,9] =  date + '-' + month + '-' + year
         
 data = data.drop(columns = ["Strategy1", "Total Stocks", "Month", "Year"])
-
 data[["Junk","Premium"]] = data["Premium"].str.split("@", expand = True)
 data = data.drop(columns = ["Junk"])
 
@@ -239,36 +238,40 @@ for i in range(len(vertical)):
         vertical.iloc[i,18] = float(vertical.iloc[i,16]) - float(vertical.iloc[i,11])
         
 vertical["actual premium"] = None
-    
-for i in range(len(vertical)):
-    if(vertical.iloc[i,10] == "CALL"):
-        ticker = vertical.iloc[i,5]
-        expiry = datetime(2020,11,20)
-        
-        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
 
-        timestamp = str(timestamp)
-
-        temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true") 
+def utcConvert(value):
+        exp = vertical["Expiry Date"].str.split("-", expand = True)
         
-        temp = temp[0]
-        
-        temp.head
+        exp1 = exp.iloc[i]
        
-        call = vertical.iloc[i,13]
+        expiry = datetime(int(exp1.iloc[2]), int(exp1.iloc[1]), int(exp1.iloc[0]))
+        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
+        timestamp = str(timestamp)
         
-        for x in range(len(temp)):
-            if (float(temp.iloc[x,5]) == float(call)):
-                vertical.iloc[i,19] = temp.iloc[x,0]
-    
-    elif(vertical.iloc[i,10] == "PUT"):
+        return timestamp
+
+for i in range(len(vertical)):
+    try:
+        if(vertical.iloc[i,10] == "CALL"):
+            ticker = vertical.iloc[i,5]
+            timestamp = utcConvert(i)
+            temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
+            temp = temp[0]
+            call = vertical.iloc[i,13]
         
-        put = vertical.iloc[i,16]
-        
-        for x in range(len(temp)):
-            if (float(temp.iloc[x,5]) == float(put)):
-                vertical.iloc[i,19] = temp.iloc[x,0]
+            for x in range(len(temp)):
+                if (float(temp.iloc[x,5]) == float(call)):
+                    vertical.iloc[i,19] = temp.iloc[x,0]
+         
+        elif(vertical.iloc[i,10] == "PUT"):            
+            put = vertical.iloc[i,16]
+            for x in range(len(temp)):
+                if (float(temp.iloc[x,5]) == float(put)):
+                    vertical.iloc[i,19] = temp.iloc[x,0]
+    except:
+        vertical.iloc[i,19] = 0 
                 
+vertical["actual premium"] = vertical["actual premium"].fillna(0)                
 vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
 vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
 

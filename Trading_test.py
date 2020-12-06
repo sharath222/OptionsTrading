@@ -239,12 +239,12 @@ for i in range(len(vertical)):
         
 vertical["actual premium"] = None
 
-def utcConvert():
+def utcConvert(value):
         exp = vertical["Expiry Date"].str.split("-", expand = True)
+        
+        exp1 = exp.iloc[i]
        
-        for i in range(len(exp)):
-            # print(exp.iloc[i,0])
-            expiry = datetime(int(exp.iloc[i,2]), int(exp.iloc[i,1]), int(exp.iloc[i,0]))
+        expiry = datetime(int(exp1.iloc[2]), int(exp1.iloc[1]), int(exp1.iloc[0]))
         timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
         timestamp = str(timestamp)
         
@@ -254,10 +254,13 @@ for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "CALL"):
         ticker = vertical.iloc[i,5]
         
-        timestamp = utcConvert()
-        temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
-        temp = temp[0]
-        temp.head
+        try:
+            timestamp = utcConvert(i)
+            temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
+            temp = temp[0]
+        
+        except:
+            temp = []
        
         call = vertical.iloc[i,13]
         
