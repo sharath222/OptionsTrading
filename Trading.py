@@ -5,8 +5,8 @@ from datetime import timezone
 from datetime import datetime
 
 #load data and remove un-neccesary fields and make data column string due to date format incosistency in csv file
-# data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
-data = pd.read_csv("2020-09-27-AccountStatement.csv",dtype={'DATE': str})
+data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
+# data = pd.read_csv("2020-09-27-AccountStatement.csv",dtype={'DATE': str})
 
 # rename columns
 data = data.rename(columns=data.iloc[2])
@@ -103,8 +103,43 @@ data["Weekly/Monthly"] = data["Weekly/Monthly"].fillna("Monthly")
 
 data["Trade"] = data["Trade"].fillna("-")
 
+def convertMonth(month):
+    if month == 'JAN':
+        month = int(1)
+    elif month == 'FEB':
+        month = int(2)
+    elif month == 'MAR':
+        month = int(3)
+    elif month == 'APR':
+        month = int(4)
+    elif month == 'MAY':
+        month = int(5)
+    elif month == 'JUN':
+        month = int(6)
+    elif month == 'JUL':
+        month = int(7)
+    elif month == 'AUG':
+        month = int(8)
+    elif month == 'SEP':
+        month = int(9)
+    elif month == 'OCT':
+        month = int(10)
+    elif month == 'NOV':
+        month = int(11)
+    else:
+        month = int(12)    
+    
+    return str(month)
+
+def convertYear(year):
+    year = str(20) + year  
+    return str(year)
+
 for i in range(len(data)):
-    data.iloc[i,9] = data.iloc[i,9] + '-' + data.iloc[i,10] + '-' + data.iloc[i,11]
+    month = convertMonth(data.iloc[i,10])
+    year = convertYear(data.iloc[i,11])
+    date = data.iloc[i,9]
+    data.iloc[i,9] =  date + '-' + month + '-' + year
         
 data = data.drop(columns = ["Strategy1", "Total Stocks", "Month", "Year"])
 
@@ -204,11 +239,6 @@ for i in range(len(vertical)):
         vertical.iloc[i,18] = float(vertical.iloc[i,16]) - float(vertical.iloc[i,11])
         
 vertical["actual premium"] = None
-
-# vertical["Profit/Loss"] = None
-
-# vertical["actual Call + Premium"] = None
-# vertical["actual Put - Premium"] = None
     
 for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "CALL"):
@@ -238,33 +268,6 @@ for i in range(len(vertical)):
         for x in range(len(temp)):
             if (float(temp.iloc[x,5]) == float(put)):
                 vertical.iloc[i,19] = temp.iloc[x,0]
-
-vertical["Present Premium"] = vertical["Pctual Premium"].fillna(0)
-                
-# for i in range(len(vertical)):
-#     if(vertical.iloc[i,2] == "BOT"):
-#         if(vertical.iloc[i,10] == "CALL"):
-#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Loss"
-#             else:
-#                 vertical.iloc[i,20] = "Profit"
-#         else:
-#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Profit"
-#             else:
-#                 vertical.iloc[i,20] = "Loss"
-    
-#     if(vertical.iloc[i,2] == "SOLD"):
-#         if(vertical.iloc[i,10] == "CALL"):
-#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Loss"
-#             else:
-#                 vertical.iloc[i,20] = "Profit"
-#         else:
-#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Profit"
-#             else:
-#                 vertical.iloc[i,20] = "Loss"
                 
 vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
 vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)

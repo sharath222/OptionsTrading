@@ -103,11 +103,45 @@ data["Weekly/Monthly"] = data["Weekly/Monthly"].fillna("Monthly")
 
 data["Trade"] = data["Trade"].fillna("-")
 
+def convertMonth(month):
+    if month == 'JAN':
+        month = int(1)
+    elif month == 'FEB':
+        month = int(2)
+    elif month == 'MAR':
+        month = int(3)
+    elif month == 'APR':
+        month = int(4)
+    elif month == 'MAY':
+        month = int(5)
+    elif month == 'JUN':
+        month = int(6)
+    elif month == 'JUL':
+        month = int(7)
+    elif month == 'AUG':
+        month = int(8)
+    elif month == 'SEP':
+        month = int(9)
+    elif month == 'OCT':
+        month = int(10)
+    elif month == 'NOV':
+        month = int(11)
+    else:
+        month = int(12)    
+    
+    return str(month)
+
+def convertYear(year):
+    year = str(20) + year  
+    return str(year)
+
 for i in range(len(data)):
-    data.iloc[i,9] = data.iloc[i,9] + '-' + data.iloc[i,10] + '-' + data.iloc[i,11]
+    month = convertMonth(data.iloc[i,10])
+    year = convertYear(data.iloc[i,11])
+    date = data.iloc[i,9]
+    data.iloc[i,9] =  date + '-' + month + '-' + year
         
 data = data.drop(columns = ["Strategy1", "Total Stocks", "Month", "Year"])
-
 data[["Junk","Premium"]] = data["Premium"].str.split("@", expand = True)
 data = data.drop(columns = ["Junk"])
 
@@ -205,24 +239,24 @@ for i in range(len(vertical)):
         
 vertical["actual premium"] = None
 
-# vertical["Profit/Loss"] = None
+def utcConvert():
+        exp = vertical["Expiry Date"].str.split("-", expand = True)
+       
+        for i in range(len(exp)):
+            # print(exp.iloc[i,0])
+            expiry = datetime(int(exp.iloc[i,2]), int(exp.iloc[i,1]), int(exp.iloc[i,0]))
+        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
+        timestamp = str(timestamp)
+        
+        return timestamp
 
-# vertical["actual Call + Premium"] = None
-# vertical["actual Put - Premium"] = None
-    
 for i in range(len(vertical)):
     if(vertical.iloc[i,10] == "CALL"):
         ticker = vertical.iloc[i,5]
-        expiry = datetime(2020,11,20)
         
-        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
-
-        timestamp = str(timestamp)
-
-        temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true") 
-        
+        timestamp = utcConvert()
+        temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
         temp = temp[0]
-        
         temp.head
        
         call = vertical.iloc[i,13]
@@ -238,34 +272,8 @@ for i in range(len(vertical)):
         for x in range(len(temp)):
             if (float(temp.iloc[x,5]) == float(put)):
                 vertical.iloc[i,19] = temp.iloc[x,0]
-
-vertical["actual premium"] = vertical["actual premium"].fillna(0)
                 
-# for i in range(len(vertical)):
-#     if(vertical.iloc[i,2] == "BOT"):
-#         if(vertical.iloc[i,10] == "CALL"):
-#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Loss"
-#             else:
-#                 vertical.iloc[i,20] = "Profit"
-#         else:
-#             if(float(vertical.iloc[i,11]) > float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Profit"
-#             else:
-#                 vertical.iloc[i,20] = "Loss"
-    
-#     if(vertical.iloc[i,2] == "SOLD"):
-#         if(vertical.iloc[i,10] == "CALL"):
-#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Loss"
-#             else:
-#                 vertical.iloc[i,20] = "Profit"
-#         else:
-#             if(float(vertical.iloc[i,11]) < float(vertical.iloc[i,19])):
-#                 vertical.iloc[i,20] = "Profit"
-#             else:
-#                 vertical.iloc[i,20] = "Loss"
-                
+vertical["actual premium"] = vertical["actual premium"].fillna(0)                
 vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
 vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
 
