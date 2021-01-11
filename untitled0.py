@@ -1,30 +1,45 @@
-import pandas as pd
-from datetime import timezone
-from datetime import datetime
-import yfinance as yf
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Dec 18 13:19:56 2020
 
-# from yahoofinancials import YahooFinancials
+@author: chand
+"""
 
-# dt = datetime.now().date()
-# dt = str(dt)
-# dx = dt.split('-')
+from datetime import date
 
-date = datetime(2020,11,20)
+dt = "2021 Aug 6 04:50:03.131192"
 
-ticker = "FB"
+_year, _month, _date, _time = dt.split(" ")
 
-# currentPrice = yf.download(ticker, start=date, progress=True)
-# currentPrice.head()
 
-# dt = datetime(int(dx[0]), int(dx[1]), int(dx[2]))
-# timestamp = int(dt.replace(tzinfo=timezone.utc).timestamp())
+month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+Nmonth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-timestamp = int(date.replace(tzinfo=timezone.utc).timestamp())
+for i in range(len(month)):
+    for j in range(len(Nmonth)):
+        if _month == month[i]:
+            _month = Nmonth[j]
 
-timestamp = str(timestamp)
+_year = int(_year)
+_month = int(_month)
+_date = int(_date)
+# _time = float(_time)
 
-temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
 
-temp = temp[0]
+# ttlDate = date(_year, _month, _date)
 
-print(timestamp)
+# from datetime import datetime
+
+# datetime_str = '09 Jan 18 13:55:26.155661'
+
+# datetime_object = datetime.strptime(datetime_str, '%d %b %y %H:%M:%S.%f')
+
+# print(datetime_object)
+
+# from datetime import datetime
+
+# datetime_str = '2021 Jan 6 13:55:26.155661'
+
+# datetime_object = datetime.strptime(datetime_str, '%Y %b %d %H:%M:%S.%f')
+
+# print(datetime_object)

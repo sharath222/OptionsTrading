@@ -1,12 +1,82 @@
 import pandas as pd
 import numpy as np
-import pandas as pd
 from datetime import timezone
 from datetime import datetime
+import time  
+ 
+def convertMonth(month):
+    if month == 'JAN':
+        month = int(1)
+    elif month == 'FEB':
+        month = int(2)
+    elif month == 'MAR':
+        month = int(3)
+    elif month == 'APR':
+        month = int(4)
+    elif month == 'MAY':
+        month = int(5)
+    elif month == 'JUN':
+        month = int(6)
+    elif month == 'JUL':
+        month = int(7)
+    elif month == 'AUG':
+        month = int(8)
+    elif month == 'SEP':
+        month = int(9)
+    elif month == 'OCT':
+        month = int(10)
+    elif month == 'NOV':
+        month = int(11)
+    else:
+        month = int(12)    
+    # month = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    # Nmonth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    # for i in range(len(month)):
+    #     for j in range(len(Nmonth)):
+    #         if value == month[i]:
+    #             value = Nmonth[j]
+    return str(month)
+
+def convertYear(year):
+    year = str(20) + year  
+    return str(year)
+
+def utcConvert(value):
+        exp = data["Expiry Date"].str.split("-", expand = True)
+        exp1 = exp.iloc[i]
+        expiry = datetime(int(exp1.iloc[2]), int(exp1.iloc[1]), int(exp1.iloc[0]))
+        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
+        timestamp = str(timestamp)
+        return timestamp
+    
+def naked():
+    if(data.iloc[i,10] == "CALL"):
+        if(data.iloc[i,13] != '-'):
+            data.iloc[i,17] = float(data.iloc[i,13]) + float(data.iloc[i,11])
+        elif(data.iloc[i,14] != '-'):
+            data.iloc[i,17] = float(data.iloc[i,14]) + float(data.iloc[i,11])
+    elif(data.iloc[i,10] == "PUT"):
+        if(data.iloc[i,15] != '-'):
+            data.iloc[i,18] = float(data.iloc[i,15]) - float(data.iloc[i,11])
+        if(data.iloc[i,16] != '-'):
+            data.iloc[i,18] = float(data.iloc[i,16]) - float(data.iloc[i,11])
+
+def vertical():
+    if(data.iloc[i,10] == "CALL"):
+        data.iloc[i,17] = float(data.iloc[i,13]) + float(data.iloc[i,11])
+    elif(data.iloc[i,10] == "PUT"):
+        data.iloc[i,18] = float(data.iloc[i,15]) - float(data.iloc[i,11])
+
+def ironcondor():
+    data.iloc[i,17] = float(data.iloc[i,14]) + float(data.iloc[i,11])
+    data.iloc[i,18] = float(data.iloc[i,15]) - float(data.iloc[i,11])
+    
+# Using for loop 
+start = time.time()
 
 #load data and remove un-neccesary fields and make data column string due to date format incosistency in csv file
-# data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
-data = pd.read_csv("2020-09-05-AccountStatement.csv",dtype={'DATE': str})
+data = pd.read_csv("2021-01-05-AccountStatement.csv",dtype={'DATE': str})
+# data = pd.read_csv("2020-09-27-AccountStatement.csv",dtype={'DATE': str})
 
 # rename columns
 data = data.rename(columns=data.iloc[2])
@@ -54,8 +124,8 @@ data["Strategy1"] = data["Strategy1"].replace("100", np.nan)
 mask = data["Strategy1"].isna()
 data.loc[mask, "Strategy":] = data.loc[mask, "Strategy":].shift(1, axis=1)
 
-otherStrategy = data[data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDER", na = False)]
-data = data[~data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDAR", na = False)]
+otherStrategy = data[data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDER|COMBO|COVERED|STRADDLE|STRANGLE|WORK", na = False)]
+data = data[~data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDAR|COMBO|COVERED|STRADDLE|STRANGLE", na = False)]
 
 mask = data["Trade"].isna()
 data.loc[mask, "Strategy1":] = data.loc[mask, "Strategy1":].shift(1, axis=1)
@@ -103,38 +173,6 @@ data["Weekly/Monthly"] = data["Weekly/Monthly"].fillna("Monthly")
 
 data["Trade"] = data["Trade"].fillna("-")
 
-def convertMonth(month):
-    if month == 'JAN':
-        month = int(1)
-    elif month == 'FEB':
-        month = int(2)
-    elif month == 'MAR':
-        month = int(3)
-    elif month == 'APR':
-        month = int(4)
-    elif month == 'MAY':
-        month = int(5)
-    elif month == 'JUN':
-        month = int(6)
-    elif month == 'JUL':
-        month = int(7)
-    elif month == 'AUG':
-        month = int(8)
-    elif month == 'SEP':
-        month = int(9)
-    elif month == 'OCT':
-        month = int(10)
-    elif month == 'NOV':
-        month = int(11)
-    else:
-        month = int(12)    
-    
-    return str(month)
-
-def convertYear(year):
-    year = str(20) + year  
-    return str(year)
-
 for i in range(len(data)):
     month = convertMonth(data.iloc[i,10])
     year = convertYear(data.iloc[i,11])
@@ -157,20 +195,16 @@ for i in range(len(data)):
         if (data.iloc[i,10] == 'CALL'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,13] = data.iloc[i,9]
-                data.iloc[i,9] = None
         elif (data.iloc[i,10] == 'PUT'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,16] = data.iloc[i,9]
-                data.iloc[i,9] = None
     elif (data.iloc[i,2] == 'SOLD'):
         if (data.iloc[i,10] == 'CALL'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,14] = data.iloc[i,9]
-                data.iloc[i,9] = None
         elif (data.iloc[i,10] == 'PUT'):
             if(data.iloc[i,17] == False):
                 data.iloc[i,15] = data.iloc[i,9]
-                data.iloc[i,9] = None
 
 data["Temp1"] = None
 data["Temp2"] = None
@@ -182,22 +216,21 @@ data[["Temp1","Temp2","Temp3","Temp4"]] = data["Strike Price"].str.split("/", ex
 for i in range(len(data)):
     if (data.iloc[i,19] != None):
         if (data.iloc[i,20] == None and data.iloc[i,21] == None):
-            if (data.iloc[i,10] == 'CALL'):
-                data.iloc[i,13] = data.iloc[i,18]
-                data.iloc[i,14] = data.iloc[i,19]
-                data.iloc[i,18] = None
-                data.iloc[i,19] = None
-                data.iloc[i,9] = None
-
-for i in range(len(data)):
-    if (data.iloc[i,19] != None):
-        if (data.iloc[i,20] == None and data.iloc[i,21] == None):
-            if (data.iloc[i,10] == 'PUT'):
-                data.iloc[i,16] = data.iloc[i,18]
-                data.iloc[i,15] = data.iloc[i,19]
-                data.iloc[i,18] = None
-                data.iloc[i,19] = None
-                data.iloc[i,9] = None
+            if (data.iloc[i,2] == 'BOT'): 
+                if (data.iloc[i,10] == 'CALL'):
+                    data.iloc[i,13] = data.iloc[i,18]
+                    data.iloc[i,14] = data.iloc[i,19]
+                elif (data.iloc[i,10] == 'PUT'):
+                    data.iloc[i,16] = data.iloc[i,18]
+                    data.iloc[i,15] = data.iloc[i,19]
+            else:
+                if (data.iloc[i,10] == 'CALL'):
+                    data.iloc[i,14] = data.iloc[i,18]
+                    data.iloc[i,13] = data.iloc[i,19]
+                elif (data.iloc[i,10] == 'PUT'):
+                    data.iloc[i,15] = data.iloc[i,18]
+                    data.iloc[i,16] = data.iloc[i,19]
+            
 
 for i in range(len(data)):
     if (data.iloc[i,18] != None and data.iloc[i,19] != None and data.iloc[i,20] != None and data.iloc[i,21] != None):
@@ -206,106 +239,114 @@ for i in range(len(data)):
                 data.iloc[i,14] = data.iloc[i,19]
                 data.iloc[i,16] = data.iloc[i,20]
                 data.iloc[i,15] = data.iloc[i,21]
-                data.iloc[i,18] = None
-                data.iloc[i,19] = None
-                data.iloc[i,20] = None
-                data.iloc[i,21] = None
-                data.iloc[i,9] = None
+
         if (data.iloc[i,2] == 'SOLD'):  
                 data.iloc[i,13] = data.iloc[i,19]
                 data.iloc[i,14] = data.iloc[i,18]
                 data.iloc[i,16] = data.iloc[i,21]
                 data.iloc[i,15] = data.iloc[i,20]
-                data.iloc[i,18] = None
-                data.iloc[i,19] = None
-                data.iloc[i,20] = None
-                data.iloc[i,21] = None
-                data.iloc[i,9] = None
 
 data = data.drop(columns = ["Temp","Temp1","Temp2","Temp3","Temp4"])
 
-data["Call + Premium"] = None
-data["Put - Premium"] = None
+data["Call + Premium"] = np.nan
+data["Put - Premium"] = np.nan
+
+data['Call Buy'] = data['Call Buy'].fillna('-')
+data['Call Sell'] = data['Call Sell'].fillna('-')
+data['Put Buy'] = data['Put Buy'].fillna('-')
+data['Put Sell'] = data['Put Sell'].fillna('-')
+data['Strike Price'] = data['Strike Price'].fillna('-')
 
 data = data.sort_values(by=['Strategy'])
 
-vertical = data[data["Strategy"].str.contains("VERTICAL", na = False)]
+# for naked
+for i in range(len(data)):
+    if(data.iloc[i,13] != '-' and data.iloc[i,14] == '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+        naked()
+    elif(data.iloc[i,13] == '-' and data.iloc[i,14] != '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+        naked()
+    if(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] != '-' and data.iloc[i,16] == '-'):
+        naked()
+    elif(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] == '-' and data.iloc[i,16] != '-'):
+        naked()
 
-for i in range(len(vertical)):
-    if(vertical.iloc[i,10] == "CALL"):
-        vertical.iloc[i,17] = float(vertical.iloc[i,13]) + float(vertical.iloc[i,11])
-    elif(vertical.iloc[i,10] == "PUT"):
-        vertical.iloc[i,18] = float(vertical.iloc[i,16]) - float(vertical.iloc[i,11])
-        
-vertical["actual premium"] = None
+# for vertical
+for i in range(len(data)):
+    if(data.iloc[i,13] != '-' and data.iloc[i,14] != '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+        vertical()
+    elif(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] != '-' and data.iloc[i,16]!= '-'):
+        vertical()
 
-def utcConvert(value):
-        exp = vertical["Expiry Date"].str.split("-", expand = True)
-        
-        exp1 = exp.iloc[i]
-       
-        expiry = datetime(int(exp1.iloc[2]), int(exp1.iloc[1]), int(exp1.iloc[0]))
-        timestamp = int(expiry.replace(tzinfo=timezone.utc).timestamp())
-        timestamp = str(timestamp)
-        
-        return timestamp
+# for ironcondor
+for i in range(len(data)):
+    if(data.iloc[i,13] != '-' and data.iloc[i,14] != '-' and data.iloc[i,15] != '-' and data.iloc[i,16] != '-'):
+        ironcondor()
+    elif(data.iloc[i,13] != '-' and data.iloc[i,14] != '-' and data.iloc[i,15] != '-' and data.iloc[i,16]!= '-'):
+        ironcondor()
 
-for i in range(len(vertical)):
-    if(vertical.iloc[i,10] == "CALL"):
-        ticker = vertical.iloc[i,5]
-        
+data["Current Premium"] = None
+    
+for i in range(len(data)):
+    if(data.iloc[i,10] == "CALL"):
+        ticker = data.iloc[i,5]        
         try:
             timestamp = utcConvert(i)
             temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
             temp = temp[0]
-        
+            call = data.iloc[i,13]      
+            for x in range(len(temp)):
+                if (float(temp.iloc[x,5]) == float(call)):
+                    data.iloc[i,19] = temp.iloc[x,0]
         except:
-            temp = []
-       
-        call = vertical.iloc[i,13]
-        
-        for x in range(len(temp)):
-            if (float(temp.iloc[x,5]) == float(call)):
-                vertical.iloc[i,19] = temp.iloc[x,0]
-    
-    elif(vertical.iloc[i,10] == "PUT"):
-        
-        put = vertical.iloc[i,16]
-        
-        for x in range(len(temp)):
-            if (float(temp.iloc[x,5]) == float(put)):
-                vertical.iloc[i,19] = temp.iloc[x,0]
+            data.iloc[i,19] = 0              
+    elif(data.iloc[i,10] == "PUT"):
+        put = data.iloc[i,16]
+        try:
+            for x in range(len(temp)):
+                if (float(temp.iloc[x,5]) == float(put)):
+                    data.iloc[i,19] = temp.iloc[x,0]
+        except:
+            data.iloc[i,19] = 0
                 
-vertical["actual premium"] = vertical["actual premium"].fillna(0)                
-vertical[["Temp1","Temp2"]] = vertical["Quantity"].str.split("+", expand = True)
-vertical[["Temp1","Temp3"]] = vertical["Quantity"].str.split("-", expand = True)
+data["Current Premium"] = data["Current Premium"].fillna(0)                
+data[["Temp1","Temp2"]] = data["Quantity"].str.split("+", expand = True)
+data[["Temp1","Temp3"]] = data["Quantity"].str.split("-", expand = True)
 
-vertical["PnL"] = None
+data["PnL"] = None
 
-for i in range(len(vertical)):
-    if(vertical.iloc[i,21] == None):
-        vertical.iloc[i,21] = vertical.iloc[i,22]
+for i in range(len(data)):
+    if(data.iloc[i,21] == None):
+        data.iloc[i,21] = data.iloc[i,22]
         
-for i in range(len(vertical)):
-    vertical.iloc[i,23] = float(vertical.iloc[i,11]) - float(vertical.iloc[i,19])
+for i in range(len(data)):
+    try:
+        if (data.iloc[i,19] != 0):
+            data.iloc[i,23] = float(data.iloc[i,11]) - float(data.iloc[i,19])
+        else:
+            data.iloc[i,23] = 0
+    except:
+        data.iloc[i,23] = 0
+    
+data["PL_Amount"] = None
         
-vertical["PL_Amount"] = None
+for i in range(len(data)):
+    if data.iloc[i,20] != 0:
+        data.iloc[i,24] = data.iloc[i,23]*100
+
+data["Profit/Loss"] = None
+
+for i in range(len(data)):
+    try:
+        if(data.iloc[i,24] < 0):
+            data.iloc[i,25] = "Loss"
+        elif(data.iloc[i,24] > 0):
+            data.iloc[i,25] = "Profit"
+        else:
+            data.iloc[i,25] = "NA"
+    except:
+        data.iloc[i,21] = "NA"
         
-for i in range(len(vertical)):
-    if(vertical.iloc[i,10] == "CALL"):
-        vertical.iloc[i,24] = vertical.iloc[i,23]*100
-    if(vertical.iloc[i,10] == "PUT"):
-        vertical.iloc[i,24] = vertical.iloc[i,23]*100
-        
-vertical = vertical.drop(columns = ["Temp1","Temp2","Temp3","Strike Price"])
-
-vertical["Profit/Loss"] = np.nan 
-
-for i in range(len(vertical)):
-    if(vertical.iloc[i,20] < -1):
-        vertical.iloc[i,21] = "Loss"
-    else:
-        vertical.iloc[i,21] = "Profit"
+data = data.drop(columns = ["Temp1","Temp2","Temp3","Strike Price"])
+data.to_csv("options.csv")
 
 
-vertical.to_csv("options.csv")
