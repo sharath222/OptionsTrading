@@ -2,39 +2,13 @@ import pandas as pd
 import numpy as np
 from datetime import timezone
 from datetime import datetime
-import time  
+import time
+from time import strptime
+
+strptime('Feb','%b').tm_mon
  
-def convertMonth(month):
-    if month == 'JAN':
-        month = int(1)
-    elif month == 'FEB':
-        month = int(2)
-    elif month == 'MAR':
-        month = int(3)
-    elif month == 'APR':
-        month = int(4)
-    elif month == 'MAY':
-        month = int(5)
-    elif month == 'JUN':
-        month = int(6)
-    elif month == 'JUL':
-        month = int(7)
-    elif month == 'AUG':
-        month = int(8)
-    elif month == 'SEP':
-        month = int(9)
-    elif month == 'OCT':
-        month = int(10)
-    elif month == 'NOV':
-        month = int(11)
-    else:
-        month = int(12)    
-    # month = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-    # Nmonth = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-    # for i in range(len(month)):
-    #     for j in range(len(Nmonth)):
-    #         if value == month[i]:
-    #             value = Nmonth[j]
+def convertMonth(value):
+    month = strptime(value,'%b').tm_mon
     return str(month)
 
 def convertYear(year):
@@ -83,7 +57,7 @@ data = data.rename(columns=data.iloc[2])
 data = data.iloc[5:, 0:9]
 
 #filter data based on BOT/SOLD, PUT/CALL
-data = data[data["DESCRIPTION"].str.contains("BOT|SOLD", na = False)]
+data = data[data["DESCRIPTION"].str.contains("BOT|SOLD", na = False)] 
 data = data[data["DESCRIPTION"].str.contains("PUT|CALL", na = False)]
 
 #Remove unnecassary columns 
@@ -124,7 +98,7 @@ data["Strategy1"] = data["Strategy1"].replace("100", np.nan)
 mask = data["Strategy1"].isna()
 data.loc[mask, "Strategy":] = data.loc[mask, "Strategy":].shift(1, axis=1)
 
-otherStrategy = data[data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDER|COMBO|COVERED|STRADDLE|STRANGLE|WORK", na = False)]
+otherStrategy = data[data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDAR|COMBO|COVERED|STRADDLE|STRANGLE", na = False)]
 data = data[~data["Strategy"].str.contains("VERT-ROLL|DIAGONAL|CALENDAR|COMBO|COVERED|STRADDLE|STRANGLE", na = False)]
 
 mask = data["Trade"].isna()
@@ -287,27 +261,54 @@ for i in range(len(data)):
 data["Current Premium"] = None
     
 for i in range(len(data)):
-    if(data.iloc[i,10] == "CALL"):
-        ticker = data.iloc[i,5]        
+    
+        ticker = data.iloc[i,5]
         try:
             timestamp = utcConvert(i)
             temp = pd.read_html("https://finance.yahoo.com/quote/"+ticker+"/options?date="+timestamp+"&p="+ticker+"&straddle=true")
             temp = temp[0]
-            call = data.iloc[i,13]      
-            for x in range(len(temp)):
-                if (float(temp.iloc[x,5]) == float(call)):
-                    data.iloc[i,19] = temp.iloc[x,0]
+            if(data.iloc[i,10] == "CALL"):
+                if(data.iloc[i,13] != '-' and data.iloc[i,14] == '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+                    call = data.iloc[i,13]
+                elif(data.iloc[i,13] == '-' and data.iloc[i,14] != '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+                    call = data.iloc[i,14]
+                if(data.iloc[i,13] != '-' and data.iloc[i,14] != '-' and data.iloc[i,15] == '-' and data.iloc[i,16] == '-'):
+                    if(data.iloc[i,2]=='BOT'):
+                        call = data.iloc[i,13]
+                    else:
+                        call = data.iloc[i,14]
+                for x in range(len(temp)):
+                    if (float(temp.iloc[x,5]) == float(call)):
+                        data.iloc[i,19] = temp.iloc[x,0]
+                        
+            elif(data.iloc[i,10] == "PUT"):
+                if(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] != '-' and data.iloc[i,16] == '-'):
+                    put = data.iloc[i,15]
+                elif(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] == '-' and data.iloc[i,16] != '-'):
+                    put = data.iloc[i,16]    
+                elif(data.iloc[i,13] == '-' and data.iloc[i,14] == '-' and data.iloc[i,15] != '-' and data.iloc[i,16]!= '-'):
+                    if(data.iloc[i,2]=='BOT'):
+                        put = data.iloc[i,16]
+                    else:
+                        put = data.iloc[i,15]
+                for x in range(len(temp)):
+                    if (float(temp.iloc[x,5]) == float(put)):
+                        data.iloc[i,19] = temp.iloc[x,6]
+                        
+            if(data.iloc[i,10] == "CALL/PUT"):
+                if data.iloc[i,2] == 'BOT':
+                    call = data.iloc[i,15]      
+                    for x in range(len(temp)):
+                        if (float(temp.iloc[x,5]) == float(call)):
+                            data.iloc[i,19] = temp.iloc[x,0]
+                elif data.iloc[i,2] == 'SOLD':
+                    put = data.iloc[i,15]      
+                    for x in range(len(temp)):
+                        if (float(temp.iloc[x,5]) == float(call)):
+                            data.iloc[i,19] = temp.iloc[x,0]
         except:
             data.iloc[i,19] = 0              
-    elif(data.iloc[i,10] == "PUT"):
-        put = data.iloc[i,16]
-        try:
-            for x in range(len(temp)):
-                if (float(temp.iloc[x,5]) == float(put)):
-                    data.iloc[i,19] = temp.iloc[x,0]
-        except:
-            data.iloc[i,19] = 0
-                
+                    
 data["Current Premium"] = data["Current Premium"].fillna(0)                
 data[["Temp1","Temp2"]] = data["Quantity"].str.split("+", expand = True)
 data[["Temp1","Temp3"]] = data["Quantity"].str.split("-", expand = True)
@@ -347,6 +348,4 @@ for i in range(len(data)):
         data.iloc[i,21] = "NA"
         
 data = data.drop(columns = ["Temp1","Temp2","Temp3","Strike Price"])
-data.to_csv("options.csv")
-
-
+data.to_csv("options.csv", index=None)
